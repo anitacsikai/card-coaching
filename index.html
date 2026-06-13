@@ -493,16 +493,7 @@ body{font-family:'Lato',sans-serif;background:var(--warm-white);color:var(--dark
     <div class="section-title">Építsd fel a struktúrát</div>
   </div>
   <div class="builder-body">
-    <div class="builder-section">
-      <div class="builder-section-title">Kártyák állása</div>
-      <div class="builder-row">
-        <span class="builder-label">A kliens hogyan lát:</span>
-        <div class="toggle-row">
-          <button class="toggle-btn active" onclick="setCustomFace('down',this)">Lefordítva</button>
-          <button class="toggle-btn" onclick="setCustomFace('up',this)">Látható</button>
-        </div>
-      </div>
-    </div>
+
     <div class="builder-section">
       <div class="builder-section-title">Sorok és paklik</div>
       <div class="builder-row">
@@ -960,7 +951,8 @@ function updateRowBuilder(){
   const container=document.getElementById('rowsBuilder');
   const existing=container.querySelectorAll('.row-config');
   const currentVals=[...existing].map(r=>parseInt(r.querySelector('input').value)||2);
-  const currentDecks=[...existing].map(r=>r.querySelector('.deck-pick-btn.active')?.dataset.deck||currentDeckKey);
+  const currentDecks=[...existing].map(r=>r.querySelector('.deck-pick-btn[data-deck].active')?.dataset.deck||currentDeckKey);
+  const currentFaces=[...existing].map(r=>r.querySelector('.deck-pick-btn[data-face].active')?.dataset.face||'down');
   container.innerHTML='';
   for(let i=0;i<n;i++){
     const row=document.createElement('div');row.className='row-config';
@@ -970,20 +962,27 @@ function updateRowBuilder(){
       <button class="deck-pick-btn${selDeck==='noi'?' active':''}" data-deck="noi" onclick="setRowDeck(this,'noi')">♀️</button>
       <button class="deck-pick-btn${selDeck==='ferfi'?' active':''}" data-deck="ferfi" onclick="setRowDeck(this,'ferfi')">♂️</button>
       <button class="deck-pick-btn${selDeck==='eroforrás'?' active':''}" data-deck="eroforrás" onclick="setRowDeck(this,'eroforrás')">✨</button>
+    </div>
+    <div class="face-pick-btns">
+      <button class="deck-pick-btn${currentFaces[i]!=='up'?' active':''}" data-face="down" onclick="setRowFace(this,'down')" title="Lefordítva">🂠</button>
+      <button class="deck-pick-btn${currentFaces[i]==='up'?' active':''}" data-face="up" onclick="setRowFace(this,'up')" title="Látható">👁</button>
     </div>`;
     container.appendChild(row);
   }
 }
 function setRowDeck(btn,deck){
   const row=btn.closest('.row-config');
-  row.querySelectorAll('.deck-pick-btn').forEach(b=>b.classList.remove('active'));
+  row.querySelectorAll('.deck-pick-btn[data-deck]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  btn.dataset.deck=deck;
-  // Update all siblings data-deck to their original values
-  const btns=row.querySelectorAll('.deck-pick-btn');
+  const btns=row.querySelectorAll('.deck-pick-btn[data-deck]');
   if(btns[0]) btns[0].dataset.deck='noi';
   if(btns[1]) btns[1].dataset.deck='ferfi';
   if(btns[2]) btns[2].dataset.deck='eroforrás';
+  btn.classList.add('active');
+}
+function setRowFace(btn,face){
+  const row=btn.closest('.row-config');
+  row.querySelectorAll('.deck-pick-btn[data-face]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 }
 // Store custom spread config globally
@@ -993,7 +992,8 @@ function startCustomSpread(){
   const rowInputs=document.querySelectorAll('#rowsBuilder .row-config');
   customRowData=[...rowInputs].map(r=>({
     count:parseInt(r.querySelector('input').value)||1,
-    deck:r.querySelector('.deck-pick-btn.active')?.dataset.deck||currentDeckKey
+    deck:r.querySelector('.deck-pick-btn[data-deck].active')?.dataset.deck||currentDeckKey,
+    faceDown:r.querySelector('.deck-pick-btn[data-face].active')?.dataset.face!=='up'
   }));
   const total=customRowData.reduce((a,b)=>a+b.count,0);
   
@@ -1019,7 +1019,7 @@ function startCustomPickPhase(phaseIdx, prevResults){
   document.getElementById('spreadPickTitle').textContent='Saját kirakás - '+rowNum+'. sor';
   document.getElementById('spreadPickSub').textContent='Válassz '+rd.count+' lapot ('+(rd.deck==='ferfi'?'Férfi':rd.deck==='eroforrás'?'Erőforrás':'Női')+' pakli)';
   
-  if(customFaceDown){
+  if(rd.faceDown){
     buildSpreadPickGrid(shuffledDeck, rd.deck);
   } else {
     const grid=document.getElementById('spreadPickGrid');grid.innerHTML='';
@@ -1033,15 +1033,15 @@ function startCustomPickPhase(phaseIdx, prevResults){
   
   currentSpread={positions:Array(rd.count).fill({label:'',question:null})};
   updateSpreadPickUI(rd.count);
-  document.getElementById('spreadPickConfirmBtn').onclick=()=>confirmCustomPhasePick(rd.count);
-  document.getElementById('spreadPickConfirmBtn').onclick=()=>confirmCustomPhasePick(rd.count);
+  document.getElementById('spreadPickConfirmBtn').onclick=()=>confirmCustomPhasePick(rd.count, rd.faceDown);
+  document.getElementById('spreadPickConfirmBtn').onclick=()=>confirmCustomPhasePick(rd.count, rd.faceDown);
   goTo('screen-spread-pick');
 }
 
-function confirmCustomPhasePick(count){
+function confirmCustomPhasePick(count, faceDown){
   if(spreadPickSelected.size!==count)return;
   const chosen=[...spreadPickSelected].map(i=>shuffledDeck[i]);
-  customPickResults.push({cards:chosen,deck:customRowData[customPickPhase].deck});
+  customPickResults.push({cards:chosen,deck:customRowData[customPickPhase].deck,faceDown:faceDown});
   startCustomPickPhase(customPickPhase+1, customPickResults);
 }
 
@@ -1051,8 +1051,9 @@ function finishCustomSpread(){
   const allCards=[];
   customRowData.forEach((rd,ri)=>{
     const rowIdxs=[];
+    const rowFaceDown=customPickResults[ri].faceDown;
     customPickResults[ri].cards.forEach(c=>{
-      allCards.push({card:c,pos:{label:''+(idx+1),question:null},faceDown:customFaceDown});
+      allCards.push({card:c,pos:{label:''+(idx+1),question:null},faceDown:rowFaceDown});
       rowIdxs.push(idx++);
     });
     rows.push(rowIdxs);
