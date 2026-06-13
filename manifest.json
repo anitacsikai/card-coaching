@@ -1,8 +1,9 @@
 {
-  "name": "Card Coaching – Kártyákkal másként",
+  "name": "Card Coaching - Kartyakkal maskent",
   "short_name": "Card Coaching",
-  "description": "Digitális coaching kártyák önismereti munkához",
+  "description": "Digitalis coaching kartyak onismereti munk\u00e1hoz",
   "start_url": "/card-coaching/",
+  "scope": "/card-coaching/",
   "display": "standalone",
   "background_color": "#F7F5F4",
   "theme_color": "#6D3A6E",
@@ -11,12 +12,26 @@
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
