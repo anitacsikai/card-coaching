@@ -171,7 +171,7 @@ body{font-family:'Lato',sans-serif;background:var(--warm-white);color:var(--dark
 .result-header{text-align:center;padding:2rem 1.5rem 1.2rem;}
 .result-title{font-family:'Montserrat',sans-serif;font-weight:500;font-size:clamp(1.2rem,4vw,1.7rem);color:var(--dark);margin-bottom:0.3rem;}
 .result-italic{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:1rem;color:var(--plum);}
-.result-cards-area{display:flex;flex-wrap:nowrap;justify-content:flex-start;gap:16px;padding:1rem 1.5rem 1.5rem;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.result-cards-area{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;padding:1rem 1.5rem 1.5rem;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .spread-result-layout{display:flex;flex-direction:column;gap:24px;width:100%;max-width:900px;margin:0 auto;padding:0 1.2rem 1.5rem;overflow-x:hidden;}
 .spread-row{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;padding-bottom:4px;align-items:flex-start;}
 .result-actions{display:flex;justify-content:center;gap:12px;padding:1rem 1.5rem 3rem;flex-wrap:wrap;}
@@ -279,6 +279,12 @@ body{font-family:'Lato',sans-serif;background:var(--warm-white);color:var(--dark
   .spread-row{gap:10px;}
   .card-question{max-width:100px;font-size:0.78rem;}
 }
+
+/* SPREAD SUMMARY */
+.spread-summary{background:var(--lavender);border-radius:var(--radius-lg);padding:1.2rem 1.5rem;max-width:700px;margin:0.5rem auto;width:calc(100% - 3rem);}
+.spread-summary-title{font-family:'Montserrat',sans-serif;font-weight:600;font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;color:var(--plum);margin-bottom:0.6rem;}
+.spread-summary-text{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:0.95rem;color:var(--dark);line-height:1.6;}
+.spread-closing{font-family:'Montserrat',sans-serif;font-weight:600;font-size:0.82rem;color:var(--plum);margin-top:0.8rem;line-height:1.5;}
 </style>
 </head>
 <body>
@@ -631,9 +637,9 @@ const DAYS_14=[
 ];
 
 const MULTI_PHASES=[
-  {question:'Hogy látom magam most?',count:3,faceDown:false},
-  {question:'Hogy szeretném látni magam?',count:3,faceDown:false},
-  {question:'Milyen információt kapok a tudatalattiból?',count:3,faceDown:true}
+  {question:'Hogy látom magam most?',count:3,faceDown:false,questions:['Mit mutat rólam ez a lap?','Mely tulajdonságomra vagy állapotomra világít rá?','Hogyan élem meg ezt most az életemben?','Mit fogadok el ebből magamban, és mit nehezebb?','Mi a közös ebben a három képben?','Milyen visszatérő érzés, szerep vagy téma jelenik meg bennük?']},
+  {question:'Hogy szeretném látni magam?',count:3,faceDown:false,questions:['Mit mutat ez a lap arról, amilyen szeretnék lenni?','Milyen minőség vagy változás jelenik meg benne?','Mi vonz ebben a képben?','Mit jelentene ez számomra a gyakorlatban?','Mi a közös ezekben a vágyott képekben?','Milyen irányt vagy belső vágyat mutatnak együtt?']},
+  {question:'Milyen információt kapok a tudatalattiból?',count:3,faceDown:true,questions:['Mit próbál ez a lap megmutatni, amit eddig nem vettem észre?','Milyen érzést vagy belső folyamatot jelez?','Mi az, ami a háttérben hat rám?','Mire hívja fel a figyelmem?','Mi a közös ebben a három üzenetben?','Van-e egy visszatérő belső téma vagy figyelmeztetés?']}
 ];
 
 // STATE
@@ -795,7 +801,12 @@ function buildSpreadsGrid(){
 
 function startSpread(spread){
   if(spread.is14days){build14DaysGrid();goTo('screen-14days');return;}
-  if(spread.multi){startMultiSpread();return;}
+  if(spread.multi){
+    window._currentSpreadSummary=SPREAD_SUMMARIES['onismeret']||null;
+    startMultiSpread();return;
+  }
+  window._currentSpreadSummary=SPREAD_SUMMARIES[spread.id]||null;
+  if(spread.id==='napi'&&SPREAD_SUMMARIES.napi?.extraQuestions){window._napiExtraQuestions=SPREAD_SUMMARIES.napi.extraQuestions;}else{window._napiExtraQuestions=null;}
   currentSpread=spread;
   currentSpreadQuestions=spread.groups||null;
   const deck=spreadDeckKey;
@@ -831,7 +842,8 @@ function confirmSpreadPick(){
   const positions=currentSpread.positions;
   const picked=positions.map((pos,i)=>({card:chosen[i]||chosen[0],pos,faceDown:true}));
   lastResultCards=picked;lastResultTitle=currentSpread.name;
-  showResult(currentSpread.name,'Kattints a kártyákra a megfordításhoz',picked,currentSpread,currentSpreadQuestions);
+  const simpleQs=currentSpread.questions||null;
+  showResult(currentSpread.name,'Kattints a kártyákra a megfordításhoz',picked,currentSpread,currentSpreadQuestions,simpleQs);
 }
 
 // 14 NAPOS
@@ -924,20 +936,44 @@ function confirmMultiPhase(){
 function showMultiResult(){
   document.getElementById('resultTitle').textContent='Önismereti tükör';
   document.getElementById('resultSub').textContent='Kattints a kártyákra a megfordításhoz';
-  const area=document.getElementById('resultArea');area.innerHTML='';area.style.display='block';
+  const area=document.getElementById('resultArea');area.innerHTML='';area.style.display='flex';area.style.flexDirection='column';area.style.alignItems='center';
   const container=document.createElement('div');container.className='multi-groups-container';
-  multiResults.forEach(group=>{
+  multiResults.forEach((group,gi)=>{
     const wrapper=document.createElement('div');wrapper.className='multi-group';
     const tw=document.createElement('div');tw.style.textAlign='center';tw.style.marginBottom='1rem';
     const t=document.createElement('span');t.className='multi-group-title';t.textContent=group.phase.question;tw.appendChild(t);
     wrapper.appendChild(tw);
     const cr=document.createElement('div');cr.className='multi-group-wrap';
     group.cards.forEach((item,i)=>{cr.appendChild(makeCardBlock({card:item.card,pos:null,faceDown:item.faceDown},i));});
-    wrapper.appendChild(cr);container.appendChild(wrapper);
+    wrapper.appendChild(cr);
+    container.appendChild(wrapper);
   });
   area.appendChild(container);
-  document.getElementById('resultQuestions').innerHTML='';
+
+  const qArea=document.getElementById('resultQuestions');qArea.innerHTML='';
   document.getElementById('resultUpsell').innerHTML='';
+
+  const spreadSummaryData = window._currentSpreadSummary;
+  if(spreadSummaryData){
+    const sumDiv=document.createElement('div');sumDiv.className='spread-summary';
+    sumDiv.innerHTML='<div class="spread-summary-title">Mit mutathat meg ez a kirakás?</div><div class="spread-summary-text">'+spreadSummaryData.summary+'</div>'+(spreadSummaryData.closing?('<div class="spread-closing">'+spreadSummaryData.closing+'</div>'):'');
+    qArea.appendChild(sumDiv);
+    window._currentSpreadSummary=null;
+  }
+
+  const sec=document.createElement('div');sec.className='questions-section';
+  sec.innerHTML='<div class="questions-title">Segítő kérdések</div>';
+  const romanLabels=['I.','II.','III.'];
+  multiResults.forEach((group,gi)=>{
+    if(group.phase.questions&&group.phase.questions.length){
+      const gDiv=document.createElement('div');gDiv.className='question-group';
+      gDiv.innerHTML='<div class="question-group-title">'+(romanLabels[gi]||'')+' '+group.phase.question+'</div>';
+      group.phase.questions.forEach(q=>{const qi=document.createElement('div');qi.className='question-item';qi.textContent=q;gDiv.appendChild(qi);});
+      sec.appendChild(gDiv);
+    }
+  });
+  qArea.appendChild(sec);
+
   goTo('screen-result');
 }
 
@@ -1067,7 +1103,7 @@ function finishCustomSpread(){
 function showResult(title,sub,items,spread,groupQuestions,simpleQuestions){
   document.getElementById('resultTitle').textContent=title;
   document.getElementById('resultSub').textContent=sub;
-  const area=document.getElementById('resultArea');area.innerHTML='';area.style.display='block';
+  const area=document.getElementById('resultArea');area.innerHTML='';area.style.display='flex';area.style.flexDirection='column';area.style.alignItems='center';
   const qArea=document.getElementById('resultQuestions');qArea.innerHTML='';
   const upsell=document.getElementById('resultUpsell');upsell.innerHTML='';
   let blocks=[];
@@ -1087,6 +1123,15 @@ function showResult(title,sub,items,spread,groupQuestions,simpleQuestions){
     area.appendChild(row);
   }
 
+  // Summary box - always first, before helping questions
+  const spreadSummaryData = window._currentSpreadSummary;
+  if(spreadSummaryData){
+    const sumDiv=document.createElement('div');sumDiv.className='spread-summary';
+    sumDiv.innerHTML='<div class="spread-summary-title">Mit mutathat meg ez a kirakás?</div><div class="spread-summary-text">'+spreadSummaryData.summary+'</div>'+(spreadSummaryData.closing?('<div class="spread-closing">'+spreadSummaryData.closing+'</div>'):'');
+    qArea.appendChild(sumDiv);
+    window._currentSpreadSummary=null;
+  }
+
   if(groupQuestions){
     const sec=document.createElement('div');sec.className='questions-section';
     sec.innerHTML='<div class="questions-title">Segítő kérdések</div>';
@@ -1100,8 +1145,11 @@ function showResult(title,sub,items,spread,groupQuestions,simpleQuestions){
   } else if(simpleQuestions){
     const sec=document.createElement('div');sec.className='questions-section';
     sec.innerHTML='<div class="questions-title">Segítő kérdések</div>';
+    const extraQs=window._napiExtraQuestions||[];
+    extraQs.forEach(q=>{const qi=document.createElement('div');qi.className='question-item';qi.textContent=q;sec.appendChild(qi);});
     simpleQuestions.forEach(q=>{const qi=document.createElement('div');qi.className='question-item';qi.textContent=q;sec.appendChild(qi);});
     qArea.appendChild(sec);
+    window._napiExtraQuestions=null;
   }
 
   enableDragDrop(blocks);
@@ -1184,6 +1232,56 @@ function swapBlocks(blocks,fromIdx,toIdx){
   if(fromNext===toBlock){parent.insertBefore(toBlock,fromBlock);}
   else{parent.insertBefore(fromBlock,toBlock);if(fromNext){parent.insertBefore(toBlock,fromNext);}else{parent.appendChild(toBlock);}}
 }
+
+
+// Spread summaries
+const SPREAD_SUMMARIES = {
+  napi: {
+    extraQuestions: ['Napra hangoló kérdés: Mi az, amire ma a leginkább szükségem van, és hogyan tudok tudatosan kapcsolódni ehhez a nap folyamán?', 'Alternatív kérdés: Mit szeretne ma megmutatni nekem ez a nap önmagamról?'],
+    summary: 'Ez a kirakás segít megérkezni a jelenbe, és tudatosabban kapcsolódni a benned zajló folyamatokhoz. Támogat abban, hogy felismerd, mi lehet a napod fókusza, milyen erőforrásokra támaszkodhatsz, és mire érdemes figyelmet fordítanod.',
+    closing: null
+  },
+  hatarok: {
+    summary: 'Ez a kirakás segít tudatosítani, hogyan működnek a személyes határaid, milyen érzések és akadályok befolyásolják őket, valamint milyen erőforrásokra támaszkodhatsz a változás során. Támogat abban, hogy önazonosabban képviseld önmagad, miközben kapcsolataidban is megőrzöd az egyensúlyt.',
+    closing: 'Milyen egy fontos felismerést viszel magaddal ebből a kirakásból, amely segíthet a következő helyzetben tisztábban képviselni a saját határaidat?'
+  },
+  onelfogadas: {
+    summary: 'Ez a kirakás segít feltérképezni, hogyan viszonyulsz önmagadhoz: mennyire tudod elfogadni és szeretni magad, mely belső hangok vagy tapasztalatok nehezítik ezt, és milyen erőforrásaid vannak az önelfogadás megerősítéséhez.',
+    closing: 'Milyen felismerést viszel magaddal, ami segíthet abban, hogy egy következő helyzetben elfogadóbb legyél önmagaddal szemben?'
+  },
+  komfortzóna: {
+    summary: 'Ez a kirakás segít rálátni arra, hol húzódik a jelenlegi komfortzónád határa, milyen szokások és biztonságérzetek tartanak benne, valamint milyen vágyak és célok hívnak kifelé ebből a megszokott térből.',
+    closing: 'Milyen első, apró lépést tudnál megtenni, ami már ma közelebb visz ahhoz, hogy kilépj a komfortzónád határain túlra?'
+  },
+  onismeret: {
+    summary: 'Ez a kirakás segít feltárni, hogyan látod jelenleg önmagad, milyen belső képet szeretnél kialakítani magadról, és milyen tudattalan hatások formálják ezt a folyamatot.',
+    closing: 'Milyen apró felismerés segíthet most abban, hogy közelebb kerülj ahhoz, amit a vágyott önmagadról mutatnak ezek a lapok?'
+  },
+  vakfolt: {
+    summary: 'Ez a kirakás segít rálátni arra, hogyan látod önmagad, hogyan látnak mások, és milyen részei vannak a személyiségednek, amelyek számodra ismertek vagy éppen rejtettek.',
+    closing: 'Milyen felismerést viszel magaddal arról, hogyan jelenik meg az önmagadról alkotott kép és a külvilág visszajelzése közötti kapcsolat?'
+  },
+  onszeretet: {
+    summary: 'Ez a kirakás segít feltérképezni az önmagadhoz való viszonyodat: hogyan látod önmagad, hogyan bánsz magaddal a mindennapokban, és mely részeidet nehezebb elfogadnod.',
+    closing: 'Milyen apró felismerés segíthet most abban, hogy egy lépéssel közelebb kerülj az önmagaddal való elfogadóbb és szeretettelibb kapcsolódáshoz?'
+  },
+  ernyo: {
+    summary: 'Ez a kirakás segít átfogó képet kapni arról, hogy mi határozza meg jelenleg az életed középpontját, milyen belső és külső tényezők támogatnak, milyen kihívásokkal találkozol, és milyen erőforrásokra támaszkodhatsz.',
+    closing: 'Milyen felismerés segíthet most abban, hogy jobban tudd, mire érdemes támaszkodnod, és merre érdemes lépned ebben az életszakaszban?'
+  },
+  szerepeim: {
+    summary: 'Ez a kirakás segít rálátni arra, milyen szerepekben működsz jelenleg az életedben, és hogyan oszlanak el ezek között az energiáid. Megmutatja, melyik szereped van most előtérben, melyik szorult háttérbe.',
+    closing: 'Milyen apró változtatás segíthetne most abban, hogy közelebb kerülj egy számodra fenntarthatóbb és kiegyensúlyozottabb szerep-egyensúlyhoz?'
+  },
+  kapcsolati: {
+    summary: 'Ez a kirakás segít mélyebb rálátást nyerni egy fontos kapcsolatra. Megmutatja, hogyan látod a másikat, milyen belső állapotból kapcsolódsz, és mi az, ami valójában történik kettőtök dinamikájában.',
+    closing: 'Milyen felismerés segíthet most abban, hogy tisztábban lásd, mi a saját szereped ebben a kapcsolati dinamikában?'
+  },
+  dontes: {
+    summary: 'Ez a kirakás segít tisztábban rálátni arra, hol tartasz most az életedben, milyen belső állapotok és mozgatórugók hatnak rád, és milyen irányok rajzolódnak ki előtted.',
+    closing: 'Milyen felismerés segíthet most abban, hogy tisztábban lásd, mi tart a jelenlegi úton, és mi hívhat egy számodra hitelesebb irány felé?'
+  }
+};
 
 buildSpreadsGrid();
 updateRowBuilder();
