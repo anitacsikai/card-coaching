@@ -285,6 +285,11 @@ body{font-family:'Lato',sans-serif;background:var(--warm-white);color:var(--dark
 .spread-summary-title{font-family:'Montserrat',sans-serif;font-weight:600;font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;color:var(--plum);margin-bottom:0.6rem;}
 .spread-summary-text{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:0.95rem;color:var(--dark);line-height:1.6;}
 .spread-closing{font-family:'Montserrat',sans-serif;font-weight:600;font-size:0.82rem;color:var(--plum);margin-top:0.8rem;line-height:1.5;}
+
+/* CLOSING REFLECTION */
+.closing-reflection{background:var(--white);border:1.5px solid var(--lavender-mid);border-radius:var(--radius-lg);padding:1.4rem 1.5rem;max-width:700px;margin:0.5rem auto 1rem;width:calc(100% - 3rem);}
+.closing-reflection p{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:0.95rem;color:var(--dark);line-height:1.7;margin-bottom:0.7rem;}
+.closing-reflection p:last-child{margin-bottom:0;}
 </style>
 </head>
 <body>
@@ -973,6 +978,7 @@ function showMultiResult(){
     }
   });
   qArea.appendChild(sec);
+  appendClosingReflection();
 
   goTo('screen-result');
 }
@@ -1153,6 +1159,7 @@ function showResult(title,sub,items,spread,groupQuestions,simpleQuestions){
   }
 
   enableDragDrop(blocks);
+  if(spread){appendClosingReflection();}
   goTo('screen-result');
 }
 
@@ -1282,6 +1289,14 @@ const SPREAD_SUMMARIES = {
     closing: 'Milyen felismerés segíthet most abban, hogy tisztábban lásd, mi tart a jelenlegi úton, és mi hívhat egy számodra hitelesebb irány felé?'
   }
 };
+
+
+function appendClosingReflection(){
+  const qArea=document.getElementById('resultQuestions');
+  const div=document.createElement('div');div.className='closing-reflection';
+  div.innerHTML=`<div class="closing-reflection"><p>Mielőtt továbblépnél, állj meg egy pillanatra, és vegyél néhány mély lélegzetet. Érezd a talajt a talpad alatt, és vedd észre, mi van körülötted ebben a jelen pillanatban.</p><p>Nem kell most mindent megértened vagy megoldanod, elég, ha megengeded, hogy mindaz, amit felismertél, jelen legyen benned.</p><p>Ha szeretnéd, írj le néhány szót arról, amit fontosnak érzel magaddal vinni ebből az élményből. Lehet, hogy érdemes egy erre kijelölt füzetbe összegyűjteni a feljövő gondolatokat, érzéseket és felismeréseket.</p></div>`;
+  qArea.appendChild(div);
+}
 
 buildSpreadsGrid();
 updateRowBuilder();
