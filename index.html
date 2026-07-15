@@ -290,9 +290,35 @@ body{font-family:'Lato',sans-serif;background:var(--warm-white);color:var(--dark
 .closing-reflection{background:var(--white);border:1.5px solid var(--lavender-mid);border-radius:var(--radius-lg);padding:1.4rem 1.5rem;max-width:700px;margin:0.5rem auto 1rem;width:calc(100% - 3rem);}
 .closing-reflection p{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:0.95rem;color:var(--dark);line-height:1.7;margin-bottom:0.7rem;}
 .closing-reflection p:last-child{margin-bottom:0;}
+
+/* PASSWORD GATE */
+#passwordGate{position:fixed;inset:0;background:linear-gradient(135deg,var(--warm-white),var(--lavender));z-index:9999;display:flex;align-items:center;justify-content:center;padding:1.5rem;}
+#passwordGate.hidden{display:none;}
+.pw-box{background:var(--white);border-radius:var(--radius-lg);padding:2.5rem 2rem;max-width:380px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(109,58,110,0.15);}
+.pw-logo{margin-bottom:1rem;}
+.pw-title{font-family:'Montserrat',sans-serif;font-weight:600;font-size:1.1rem;color:var(--dark);margin-bottom:0.2rem;letter-spacing:1px;}
+.pw-sub{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:0.95rem;color:var(--plum);margin-bottom:1.8rem;}
+.pw-input{font-family:'Montserrat',sans-serif;font-size:0.95rem;padding:0.8rem 1rem;border:1.5px solid var(--lavender-mid);border-radius:var(--radius);width:100%;margin-bottom:1rem;text-align:center;color:var(--dark);background:var(--warm-white);}
+.pw-input:focus{outline:none;border-color:var(--plum);}
+.pw-error{color:#c0392b;font-size:0.8rem;margin-bottom:0.8rem;min-height:1.1em;}
 </style>
 </head>
 <body>
+
+<!-- PASSWORD GATE -->
+<div id="passwordGate">
+  <div class="pw-box">
+    <div class="pw-logo"><svg width="48" height="48"><use href="#cc-logo"/></svg></div>
+    <div class="pw-title">CARD COACHING</div>
+    <div class="pw-sub">Kártyákkal másként</div>
+    <input type="password" id="pwInput" class="pw-input" placeholder="Add meg a jelszót" autocomplete="off">
+    <div class="pw-error" id="pwError"></div>
+    <button class="btn-primary" style="width:100%" onclick="checkPassword()">Belépés</button>
+    <p style="margin-top:0.8rem;font-size:0.78rem;color:var(--gray);font-family:'Montserrat',sans-serif;">Elfelejtetted a jelszót? <button onclick="document.getElementById('pwForgot').style.display='block'" style="background:none;border:none;color:var(--plum);cursor:pointer;font-size:0.78rem;text-decoration:underline;font-family:'Montserrat',sans-serif;">Kattints ide</button></p>
+<div id="pwForgot" style="display:none;margin-top:0.8rem;padding:0.8rem;background:var(--lavender);border-radius:var(--radius);font-size:0.8rem;color:var(--dark);font-family:'Montserrat',sans-serif;line-height:1.5;">A jelszavad a vásárlás visszaigazoló emailedben és az online felületen a fiókodban található.<br><a href="https://cardcoaching.hu" target="_blank" style="color:var(--plum);font-weight:600;">cardcoaching.hu</a></div>
+  </div>
+</div>
+
 <svg style="display:none">
   <symbol id="cc-logo" viewBox="0 0 40 40" fill="none">
     <path d="M20 6C16 6 13 9 13 13c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z" fill="#6D3A6E"/>
@@ -621,6 +647,23 @@ const SPREADS_NEW=[
      {title:'IV. Ami segít kilépni',questions:['Milyen belső erőforrások vagy külső támogatók segíthetnek a továbblépésben?','Milyen apró, konkrét lépést tudnál megtenni már ma?']}
    ],
    rows:[[0,1],[2,3]],positions:[{label:'I.',question:null},{label:'II.',question:null},{label:'III.',question:null},{label:'IV.',question:null}]},
+  {id:'celallitas',name:'Célállítás erőforrásokkal',desc:'Hol tartasz most, mi akadályoz és mi támogat a célod felé vezető úton.',lapszam:8,
+   mixed:true,
+   positions:[
+     {label:'Jelen állapot',question:'Hol tartok most ezzel a témával kapcsolatban?'},
+     {label:'Ahova el szeretnék jutni',question:'Hova szeretnék eljutni?'},
+     {label:'1.',question:'Mi akadályoz, hogy elérjem a célom?'},
+     {label:'2.',question:'Mi akadályoz, hogy elérjem a célom?'},
+     {label:'3.',question:'Mi akadályoz, hogy elérjem a célom?'},
+     {label:'4.',question:'Mi segít elérni a célom?'},
+     {label:'5.',question:'Mi segít elérni a célom?'},
+     {label:'6.',question:'Mi segít elérni a célom?'}
+   ],
+   rows:[[0,2,3,4,1],[5,6,7]],
+   groups:[
+     {title:'Mi akadályoz, hogy elérjem a célom?',questions:['Mi az, ami visszatart a haladástól?','Milyen belső minta vagy félelem jelenik meg ebben a lapban?','Hogyan hat ez jelenleg az életedre?']},
+     {title:'Mi segít elérni a célom?',questions:['Milyen erőforrást vagy lehetőséget mutat ez a lap?','Hogyan tudod ezt tudatosan használni a következő lépésedben?','Mi az, ami már most is visz előre?']}
+   ]},
   {id:'14nap',name:'Saját történeted nyomában',desc:'14 napos önismereti utazás.',is14days:true,positions:[]}
 ];
 
@@ -810,6 +853,7 @@ function startSpread(spread){
     window._currentSpreadSummary=SPREAD_SUMMARIES['onismeret']||null;
     startMultiSpread();return;
   }
+  if(spread.mixed){startMixedSpread(spread);return;}
   window._currentSpreadSummary=SPREAD_SUMMARIES[spread.id]||null;
   if(spread.id==='napi'&&SPREAD_SUMMARIES.napi?.extraQuestions){window._napiExtraQuestions=SPREAD_SUMMARIES.napi.extraQuestions;}else{window._napiExtraQuestions=null;}
   currentSpread=spread;
@@ -1264,6 +1308,10 @@ const SPREAD_SUMMARIES = {
     summary: 'Ez a kirakás segít feltárni, hogyan látod jelenleg önmagad, milyen belső képet szeretnél kialakítani magadról, és milyen tudattalan hatások formálják ezt a folyamatot.',
     closing: 'Milyen apró felismerés segíthet most abban, hogy közelebb kerülj ahhoz, amit a vágyott önmagadról mutatnak ezek a lapok?'
   },
+  celallitas: {
+    summary: 'Ez a kirakás segít rálátni arra, hol tartasz jelenleg az életedben, milyen belső állapotok és külső helyzetek határozzák meg az irányodat, valamint milyen cél felé szeretnél haladni. Közben feltárja azokat a tényezőket, amelyek visszatartanak, és azokat is, amelyek támogatnak az előrejutásban. Segít tisztábban látni a jelenlegi helyzeted és a vágyott jövőd közötti hidat: mi az, ami már most is visz előre, és mi az, amit érdemes elengedni vagy átalakítani.',
+    closing: 'Fogalmazd meg pontosabban a célodat 1-2 mondatban: mit jelent számodra a vágyott állapot a gyakorlatban? Nézd meg az akadály-lapokat együtt: milyen visszatartó mintákat látsz bennük? Majd nézd meg a támogató lapokat: milyen erőforrásokat tudsz tudatosan használni a következő lépésedhez?'
+  },
   vakfolt: {
     summary: 'Ez a kirakás segít rálátni arra, hogyan látod önmagad, hogyan látnak mások, és milyen részei vannak a személyiségednek, amelyek számodra ismertek vagy éppen rejtettek.',
     closing: 'Milyen felismerést viszel magaddal arról, hogyan jelenik meg az önmagadról alkotott kép és a külvilág visszajelzése közötti kapcsolat?'
@@ -1296,6 +1344,139 @@ function appendClosingReflection(){
   const div=document.createElement('div');div.className='closing-reflection';
   div.innerHTML=`<div class="closing-reflection"><p>Mielőtt továbblépnél, állj meg egy pillanatra, és vegyél néhány mély lélegzetet. Érezd a talajt a talpad alatt, és vedd észre, mi van körülötted ebben a jelen pillanatban.</p><p>Nem kell most mindent megértened vagy megoldanod, elég, ha megengeded, hogy mindaz, amit felismertél, jelen legyen benned.</p><p>Ha szeretnéd, írj le néhány szót arról, amit fontosnak érzel magaddal vinni ebből az élményből. Lehet, hogy érdemes egy erre kijelölt füzetbe összegyűjteni a feljövő gondolatokat, érzéseket és felismeréseket.</p></div>`;
   qArea.appendChild(div);
+}
+
+
+// MIXED SPREAD (celallitas)
+let mixedSpreadPhase=0;
+let mixedSpreadCards=[];
+let mixedSpreadDeck=[];
+
+function startMixedSpread(spread){
+  currentSpread=spread;
+  window._currentSpreadSummary=SPREAD_SUMMARIES[spread.id]||null;
+  mixedSpreadPhase=0;
+  mixedSpreadCards=[];
+  mixedSpreadDeck=getDeckCards(spreadDeckKey);
+  runMixedPhase();
+}
+
+function runMixedPhase(){
+  const phases=[
+    {label:'Válassz 1 lapot — Jelen állapot',count:1,faceDown:false},
+    {label:'Válassz 1 lapot — Ahova el szeretnék jutni',count:1,faceDown:false},
+    {label:'Válassz 3 lapot lefordítva — Mi akadályoz?',count:3,faceDown:true},
+    {label:'Válassz 3 lapot lefordítva — Mi segít?',count:3,faceDown:true}
+  ];
+  if(mixedSpreadPhase>=phases.length){
+    showMixedResult();
+    return;
+  }
+  const phase=phases[mixedSpreadPhase];
+  spreadPickSelected.clear();
+  document.getElementById('spreadPickTitle').textContent=currentSpread.name;
+  document.getElementById('spreadPickSub').textContent=phase.label;
+  const grid=document.getElementById('spreadPickGrid');grid.innerHTML='';
+
+  if(phase.faceDown){
+    mixedSpreadDeck.forEach((c,i)=>{
+      const div=document.createElement('div');div.className=getBackClass(spreadDeckKey);div.id='sp-'+i;
+      div.innerHTML=logoSvgForDeck(spreadDeckKey);
+      div.onclick=()=>toggleSpreadPick(i,phase.count);
+      grid.appendChild(div);
+    });
+  } else {
+    // visible browse
+    grid.style.gridTemplateColumns='repeat(6,1fr)';
+    mixedSpreadDeck.forEach((c,i)=>{
+      const div=document.createElement('div');div.className='browse-card';div.id='sp-'+i;
+      const img=document.createElement('img');img.src=BASE_URL+c.file;img.alt='';img.loading='lazy';
+      img.onerror=function(){this.outerHTML='<div class="img-placeholder">🖼️</div>';};
+      div.appendChild(img);div.onclick=()=>toggleSpreadPick(i,phase.count);grid.appendChild(div);
+    });
+  }
+
+  updateSpreadPickUI(phase.count);
+  document.getElementById('spreadPickConfirmBtn').onclick=()=>confirmMixedPhase(phase);
+  document.getElementById('spreadPickBackBtn').onclick=()=>goBack();
+  goTo('screen-spread-pick');
+}
+
+function confirmMixedPhase(phase){
+  if(spreadPickSelected.size!==phase.count)return;
+  const chosen=[...spreadPickSelected].map(i=>({card:mixedSpreadDeck[i],faceDown:phase.faceDown}));
+  mixedSpreadCards.push(...chosen);
+  // Remove chosen from deck
+  const chosenIdxs=new Set([...spreadPickSelected]);
+  mixedSpreadDeck=mixedSpreadDeck.filter((_,i)=>!chosenIdxs.has(i));
+  mixedSpreadPhase++;
+  runMixedPhase();
+}
+
+function showMixedResult(){
+  // Build positions: [left(0), right(1), top3(2,3,4), bottom3(5,6,7)]
+  // Layout: row1=[left, top1, top2, top3, right], row2=[_, bot1, bot2, bot3, _]
+  const pos=currentSpread.positions;
+  const items=[
+    {card:mixedSpreadCards[0].card,pos:pos[0],faceDown:false},
+    {card:mixedSpreadCards[1].card,pos:pos[1],faceDown:false},
+    {card:mixedSpreadCards[2].card,pos:pos[2],faceDown:true},
+    {card:mixedSpreadCards[3].card,pos:pos[3],faceDown:true},
+    {card:mixedSpreadCards[4].card,pos:pos[4],faceDown:true},
+    {card:mixedSpreadCards[5].card,pos:pos[5],faceDown:true},
+    {card:mixedSpreadCards[6].card,pos:pos[6],faceDown:true},
+    {card:mixedSpreadCards[7].card,pos:pos[7],faceDown:true}
+  ];
+
+  document.getElementById('resultTitle').textContent=currentSpread.name;
+  document.getElementById('resultSub').textContent='Kattints a kártyákra a megfordításhoz';
+  const area=document.getElementById('resultArea');area.innerHTML='';area.style.display='flex';area.style.flexDirection='column';area.style.alignItems='center';
+
+  const layout=document.createElement('div');layout.className='spread-result-layout';
+
+  // Row 1: left | top3 | right
+  const row1=document.createElement('div');row1.className='spread-row';
+  const blocks=[makeCardBlock(items[0],0),makeCardBlock(items[2],2),makeCardBlock(items[3],3),makeCardBlock(items[4],4),makeCardBlock(items[1],1)];
+  blocks.forEach(b=>row1.appendChild(b));
+  layout.appendChild(row1);
+
+  // Row 2: bottom3 centered
+  const row2=document.createElement('div');row2.className='spread-row';row2.style.justifyContent='center';
+  const bottomBlocks=[makeCardBlock(items[5],5),makeCardBlock(items[6],6),makeCardBlock(items[7],7)];
+  bottomBlocks.forEach(b=>row2.appendChild(b));
+  layout.appendChild(row2);
+
+  area.appendChild(layout);
+
+  const qArea=document.getElementById('resultQuestions');qArea.innerHTML='';
+  document.getElementById('resultUpsell').innerHTML='';
+
+  // Summary
+  const spreadSummaryData=window._currentSpreadSummary;
+  if(spreadSummaryData){
+    const sumDiv=document.createElement('div');sumDiv.className='spread-summary';
+    sumDiv.innerHTML='<div class="spread-summary-title">Mit mutathat meg ez a kirakás?</div><div class="spread-summary-text">'+spreadSummaryData.summary+'</div>'+(spreadSummaryData.closing?('<div class="spread-closing">'+spreadSummaryData.closing+'</div>'):'');
+    qArea.appendChild(sumDiv);
+    window._currentSpreadSummary=null;
+  }
+
+  // Groups questions
+  if(currentSpread.groups){
+    const sec=document.createElement('div');sec.className='questions-section';
+    sec.innerHTML='<div class="questions-title">Segítő kérdések</div>';
+    currentSpread.groups.forEach(g=>{
+      const gDiv=document.createElement('div');gDiv.className='question-group';
+      gDiv.innerHTML='<div class="question-group-title">'+g.title+'</div>';
+      g.questions.forEach(q=>{const qi=document.createElement('div');qi.className='question-item';qi.textContent=q;gDiv.appendChild(qi);});
+      sec.appendChild(gDiv);
+    });
+    qArea.appendChild(sec);
+  }
+
+  appendClosingReflection();
+  const allBlocks=[...blocks,...bottomBlocks];
+  enableDragDrop(allBlocks);
+  goTo('screen-result');
 }
 
 buildSpreadsGrid();
@@ -1353,5 +1534,27 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
+
+<script>
+const ACCESS_PASSWORD = 'CardCoaching2026!';
+function checkPassword(){
+  const input = document.getElementById('pwInput').value;
+  const err = document.getElementById('pwError');
+  if(input === ACCESS_PASSWORD){
+    localStorage.setItem('cc_access_hu','granted');
+    document.getElementById('passwordGate').classList.add('hidden');
+    err.textContent='';
+  } else {
+    err.textContent='Helytelen jelszó. Kérjük, próbáld újra.';
+  }
+}
+document.getElementById('pwInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter') checkPassword();
+});
+if(localStorage.getItem('cc_access_hu') === 'granted'){
+  document.getElementById('passwordGate').classList.add('hidden');
+}
+</script>
+
 </body>
 </html>
